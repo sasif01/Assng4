@@ -1,0 +1,40 @@
+---
+title: "Assng4"
+author: "Saira Asif"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## DATA
+
+```{r}
+tumor_train <- read_csv("/Users/sairaasif49/Downloads/trainset.csv")
+
+tumor_test <- read_csv("/Users/sairaasif49/Downloads/testset.csv")
+
+```
+## elastic net (include Lasso and Ridge in your search grid)
+
+
+
+## KNN
+
+
+
+##a fully grown classification/regression tree (CART)
+
+
+
+## support vector machine
+
+
+
+## a bagged version of CART
+
+
+## random forests. 

@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(ggplot2)
 ```
 
 ## DATA
@@ -18,23 +19,23 @@ tumor_train <- read_csv("/Users/sairaasif49/Downloads/trainset.csv")
 tumor_test <- read_csv("/Users/sairaasif49/Downloads/testset.csv")
 
 ```
-## elastic net (include Lasso and Ridge in your search grid)
+## elastic net (include Lasso and Ridge in your search grid) (Saira )
 
 
 
-## KNN
+## KNN (Lisa)
 
 
 
-##a fully grown classification/regression tree (CART)
+## a fully grown classification/regression tree (CART) (Saira)
 
 
 
-## support vector machine
+## support vector machine (Lisa)
 
 
 
-## a bagged version of CART
+## a bagged version of CART (Zee)
 
 
-## random forests. 
+## random forests. (Zee)

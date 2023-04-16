@@ -9,16 +9,27 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggplot2)
+library(rpart)
+library(tree)
+#install.packages("rpart.plot")
+library(rpart.plot)
 ```
 
 ## DATA
 
 ```{r}
+# reading in training and testing dataset
 tumor_train <- read_csv("/Users/sairaasif49/Downloads/trainset.csv")
-
 tumor_test <- read_csv("/Users/sairaasif49/Downloads/testset.csv")
 
+# No missing/NA values is any columns
+apply(tumor_train, 2, function(x){sum(is.na(x))})
+
+# No 0s in the predictor columns
+apply(tumor_train, 2, function(x){sum(x==0)})
+
 ```
+
 ## elastic net (include Lasso and Ridge in your search grid) (Saira )
 
 
@@ -28,6 +39,45 @@ tumor_test <- read_csv("/Users/sairaasif49/Downloads/testset.csv")
 
 
 ## a fully grown classification/regression tree (CART) (Saira)
+
+The training set is used to build a classification trees. 
+
+We can also check if pruning the tree will improve results. Pruning selects the cp (complexity parameter) value associated with a shorter tree that minimizes the cross-validated error rate (xerror). 
+
+```{r}
+
+# Fitting a classification tree to tumor dataset
+class_tree <- rpart(status ~ ., data=tumor_train, method = "class")
+
+summary(class_tree)
+
+# Visualizing the unpruned tree
+rpart.plot(class_tree)
+
+
+# Checking the order of variable importance
+class_tree$variable.importance
+
+# Checking model fit on testing dataset
+pred_tree = predict(class_tree, tumor_test, type = "class")
+
+# Compairing the preditced reuslt w
+table(pred_tree,tumor_test$status)
+
+#Accuracy of the model is 90.58824
+(53+24)/(53+24+1+7)*100
+
+# Checkingif pruning witll improve reuslts 
+#plotcp(fit.tree)
+printcp(class_tree)
+
+# Explicitly request the lowest cp value
+bestcp <- class_tree$cptable[which.min(class_tree$cptable[,"xerror"]),"CP"]
+pruned_tree <- prune(class_tree, cp = bestcp)
+rpart.plot(pruned_tree)
+
+```
+
 
 
 

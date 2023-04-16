@@ -13,6 +13,11 @@ library(rpart)
 library(tree)
 #install.packages("rpart.plot")
 library(rpart.plot)
+library(lars)
+library(glmnet)
+library(caret)
+library(plotly)
+
 ```
 
 ## DATA
@@ -31,6 +36,12 @@ apply(tumor_train, 2, function(x){sum(x==0)})
 ```
 
 ## elastic net (include Lasso and Ridge in your search grid) (Saira )
+
+```{r}
+class(tumor_train)
+dim(tumor_train)
+
+```
 
 
 
@@ -125,3 +136,9 @@ There is no change in classification after pruning the tree. This suggests that 
 
 
 ## random forests. (Zee)
+
+
+
+## Final table 
+
+

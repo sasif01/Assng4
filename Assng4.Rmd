@@ -37,9 +37,36 @@ apply(tumor_train, 2, function(x){sum(x==0)})
 
 ## elastic net (include Lasso and Ridge in your search grid) (Saira )
 
+LASSO package glmnet requires the the response variable to be a vector and the set of predictor variables to be of the class data.matrix.
+
 ```{r}
 class(tumor_train)
 dim(tumor_train)
+
+#define response variable as vector 
+status <- tumor_train$status
+
+# dim is NULL as it is a vector, not a matrix
+dim(status)
+
+#define matrix of predictor variables
+xs <- data.matrix(tumor_train[, -1])
+dim(xs)
+
+# Variance is different across predictors, so it has not been standerdized, however glmnet automatically standardizes the variables
+apply(xs, 2, var)
+
+set.seed(12)
+#efine the type of re-sampling as cross-validation using 10-fold method
+enet <- trainControl(method = "cv", number = 10)
+
+#cv.glmnet does NOT search for values for alpha, default value is 1 (lasso)
+def_elnet = train(status ~ ., data=tumor_train, method = "glmnet", trControl = enet)
+def_elnet$results
+#perform k-fold cross-validation to find optimal lambda value that minimizes PE/MSE
+cv_model <- cv.glmnet(xs, status, type.measure = "class")
+
+prd.fl <- predict(cv_model, newx = tumor_test[,-1], s = c(cv_model$lambda.min, cv_model$lambda.1se)) 
 
 ```
 

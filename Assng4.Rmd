@@ -18,6 +18,8 @@ library(glmnet)
 library(caret)
 library(plotly)
 library(randomForest)
+library(ipred)
+library(Metrics)
 ```
 
 ## DATA
@@ -33,6 +35,9 @@ apply(tumor_train, 2, function(x){sum(is.na(x))})
 # No 0s in the predictor columns
 apply(tumor_train, 2, function(x){sum(x==0)})
 
+#convert status to factor
+tumor_train$status<-as.factor(tumor_train$status)
+tumor_test$status<-as.factor(tumor_test$status)
 ```
 
 ## elastic net (include Lasso and Ridge in your search grid) (Saira )
@@ -109,7 +114,7 @@ class_tree$variable.importance
 pred_tree = predict(class_tree, tumor_test, type = "class")
 
 # Compairing the preditced reuslt w
-table_fit <- table(pred_tree,tumor_test$status)
+table_fit <- table(pred_tree,tumor_test$status)  ################# could also just do confusionMatrix(table(pred_tree,tumor_test$status)) to get stats on model
 
 TP = table_fit[1]
 TN = table_fit[2,2]
@@ -119,9 +124,8 @@ FP =  table_fit[1,2]
 #Accuracy of the model is 90.58824
 (Acc = (TP+TN)/(TP+TN+FP+FN)) * 100
 
-#Sensitivity of model is 68.83117
-
-(SEN = TP/(TP+TN)) * 100
+#Sensitivity of model is 88.33333
+(SEN = TP/(TP+FN)) * 100
 
 # Specificity of the model is  96
 (SPES = TN/(TN+FP)) * 100
@@ -132,7 +136,7 @@ FP =  table_fit[1,2]
 We can also check if pruning the tree will improve results. Pruning selects the cp (complexity parameter) value associated with a shorter tree that minimizes the cross-validated error rate (xerror). 
 
 ```{r}
-# Checking if pruning will improve reuslts 
+# Checking if pruning will improve results 
 #plotcp(fit.tree)
 printcp(class_tree)
 
@@ -156,7 +160,7 @@ FP2 =  pruned_table[1,2]
 
 #Sensitivity of model is 68.83117
 
-(SEN2 = TP2/(TP2+TN2)) * 100
+(SEN2 = TP2/(TP2+FN2)) * 100
 
 # Specificity of the model is  96
 (SPES2 = TN2/(TN2+FP2)) * 100
@@ -171,6 +175,35 @@ There is no change in classification after pruning the tree. This suggests that 
 
 
 ## a bagged version of CART (Zee)
+```{r}
+##bagging regression trees with 150 bootstrap replications
+set.seed(123)
+bag<-bagging(status~., data=tumor_train, nbagg=150, coob=T)
+bag
+#Out-of-bag estimate of misclassification error:  0.0455
+
+#most import variables for model
+imp <- data.frame(var=names(tumor_train[,-1]), imp=varImp(bag))
+
+#sort variable importance descending
+VI_plot <- imp[order(imp$Overall, decreasing=TRUE),]
+
+#visualize variable importance with horizontal bar plot
+barplot(VI_plot$Overall,
+        names.arg=rownames(VI_plot),
+        horiz=TRUE,
+        col='steelblue',
+        xlab='Variable Importance')
+
+bag_CART_pred<-predict(bag, newdata=tumor_test, type="class")
+
+#confusionmatrix
+confusionMatrix(table(bag_CART_pred,tumor_test$status))
+#Accuracy=92.94%
+#Sensitivity=93.33%
+#Specificity=92%
+```
+
 
 
 ## random forests. (Zee)
@@ -191,9 +224,9 @@ randomforest_test <- predict(randomforest_model, newdata = tumor_test, type= "cl
 
 #Confusion matrix
 confusionMatrix(table(randomforest_test,tumor_test$status)) 
-###Accuracy of 94%
-##Sensitivity=0.9500
-##Specificity : 0.9200  
+###Accuracy= 94%
+##Sensitivity= 95%
+##Specificity= 92%  
 ```
 
 ## Final table 

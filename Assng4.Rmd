@@ -17,7 +17,7 @@ library(lars)
 library(glmnet)
 library(caret)
 library(plotly)
-
+library(randomForest)
 ```
 
 ## DATA
@@ -174,8 +174,27 @@ There is no change in classification after pruning the tree. This suggests that 
 
 
 ## random forests. (Zee)
+```{r}
+#for reproducible results
+set.seed(751)
 
+#Creating random forest model
+randomforest_model<-randomForest(status~., data=tumor_train)
+randomforest_model
+#random forest classification with 500 trees generated at each node, which splits into 5 smaller nodes
 
+#visualization of most important variables in the model
+varImpPlot(randomforest_model) 
+
+#testing the model on unseen data
+randomforest_test <- predict(randomforest_model, newdata = tumor_test, type= "class")
+
+#Confusion matrix
+confusionMatrix(table(randomforest_test,tumor_test$status)) 
+###Accuracy of 94%
+##Sensitivity=0.9500
+##Specificity : 0.9200  
+```
 
 ## Final table 
 

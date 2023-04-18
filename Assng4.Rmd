@@ -19,6 +19,7 @@ library(caret)
 library(plotly)
 library(randomForest)
 library(ipred)
+#install.packages("Metrics")
 library(Metrics)
 ```
 
@@ -26,8 +27,8 @@ library(Metrics)
 
 ```{r}
 # reading in training and testing dataset
-tumor_train <- read_csv("/Users/sairaasif49/Downloads/trainset.csv")
-tumor_test <- read_csv("/Users/sairaasif49/Downloads/testset.csv")
+#tumor_train <- read_csv("/Users/sairaasif49/Downloads/trainset.csv")
+#tumor_test <- read_csv("/Users/sairaasif49/Downloads/testset.csv")
 
 # No missing/NA values is any columns
 apply(tumor_train, 2, function(x){sum(is.na(x))})
@@ -66,6 +67,7 @@ enet <- trainControl(method = "cv", number = 10)
 # Allows us to have more alpha values, from 0 to 1, to include both lasso and ridge regression in the analysis.
 elasticGrid <- expand.grid(.alpha = seq(0, 1, length = 10), .lambda = seq(.5, 7.5, 1))
 elasticGrid <- expand.grid(.alpha = seq(0, 1, length = 10), .lambda = seq(0, 1, length =10))
+
 #cv.glmnet for computing penalized linear regression models.
 def_elnet = train(status ~ ., data=tumor_train, method = "glmnet", trControl = enet, tuneGrid = elasticGrid)
 
@@ -79,10 +81,24 @@ plot(def_elnet$results[ ,c(2,3)])
 
 ## highest possible Accuracy - best model
 max_acc <- which.max(def_elnet$results[ ,3])
+# The accuracy of this model is 94.38
 def_elnet$results[max_acc,] 
 
-# ridge regression seems the best for this dataset
+# ridge regression seems the best for this dataset (alpha =0)
 def_elnet$bestTune
+
+# Compute the prediction error on the training set
+train_enet <- glmnet(xs, status, type.measure = "class", family = "binomial", alpha = def_elnet$results[max_acc,1], lambda = def_elnet$results[max_acc,2])
+
+train_enet
+
+# Model coefficients
+coef(def_elnet$finalModel, def_elnet$bestTune$lambda)
+
+# Make predictions
+predictions <- def_elnet %>% predict(tumor_test)
+
+table(predictions, tumor_test[,1])
 
 #perform k-fold cross-validation to find optimal lambda value that minimizes PE/MSE
 cv_model <- cv.glmnet(xs, status, type.measure = "class", family = "binomial")
@@ -238,4 +254,14 @@ confusionMatrix(table(randomforest_test,tumor_test$status))
 
 ## Final table 
 
+```{r}
+tab <- matrix( ncol=3, nrow=6,byrow=TRUE)
+rownames(tab) <- c("Elastic Net", "KNN", "CART", "SVM", "Bagged CART", "Random Forest")
+colnames(tab) <- c("Acc", "Specificity", "Sensitivity")
+
+tab[1,] <-
+tab[3,] <- c(round(Acc*100, 2), round(SPES*100,2), round(SEN*100,2) )
+tab[5,] <- c(92.94,92, 93.33)
+tab[6,] <- c(94, 92, 95)
+```
 

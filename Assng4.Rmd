@@ -65,17 +65,24 @@ enet <- trainControl(method = "cv", number = 10)
 
 # Allows us to have more alpha values, from 0 to 1, to include both lasso and ridge regression in the analysis.
 elasticGrid <- expand.grid(.alpha = seq(0, 1, length = 10), .lambda = seq(.5, 7.5, 1))
-
+elasticGrid <- expand.grid(.alpha = seq(0, 1, length = 10), .lambda = seq(0, 1, length =10))
 #cv.glmnet for computing penalized linear regression models.
 def_elnet = train(status ~ ., data=tumor_train, method = "glmnet", trControl = enet, tuneGrid = elasticGrid)
 
 # results for each combination of alpha and lambda
 def_elnet$results
-plot(def_elnet$results)
+
+#lower alpha and lambda - better models
+par(mfrow = c(1,2))
+plot(def_elnet$results[ ,c(1,3)])
+plot(def_elnet$results[ ,c(2,3)])
 
 ## highest possible Accuracy - best model
 max_acc <- which.max(def_elnet$results[ ,3])
+def_elnet$results[max_acc,] 
 
+# ridge regression seems the best for this dataset
+def_elnet$bestTune
 
 #perform k-fold cross-validation to find optimal lambda value that minimizes PE/MSE
 cv_model <- cv.glmnet(xs, status, type.measure = "class", family = "binomial")

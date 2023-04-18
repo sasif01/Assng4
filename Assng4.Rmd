@@ -112,7 +112,36 @@ prd.fl <- predict(cv_model, newx = data.matrix(tumor_test[,-1]), s = c(cv_model$
 
 
 ## KNN (Lisa)
+## KNN
+library(class)
 
+trainset <- read_csv("trainset.csv")
+
+
+# Separate the response variable from the predictors
+train.X <- trainset[, 2:30]
+train.Direction <- trainset[, 1]
+test.X <- testset[, 2:30]
+test.Direction <- testset[, 1]
+
+# Set the seed for reproducibility
+set.seed(123)
+
+train_status <- trainset$status
+test_status <- testset$status  
+
+# Fit the KNN model
+knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 3)
+
+# Create a confusion matrix
+confusion_matrix <- table(knn.pred, test_status)
+
+# Print the confusion matrix
+print(confusion_matrix)
+
+# Calculate the accuracy of the model
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(paste("Accuracy:", round(accuracy, 2)))
 
 
 ## a fully grown classification/regression tree (CART) (Saira)
@@ -194,7 +223,70 @@ There is no change in classification after pruning the tree. This suggests that 
 
 
 ## support vector machine (Lisa)
+library(readr)
+library(e1071)
+install.packages("caret")
+library(caret)
 
+## SVM
+trainset <- read_csv("trainset.csv")
+#View(trainset)
+
+x <- trainset[,-1]
+y <- trainset[,1]
+y <- y[!is.na(y)]
+
+# combine the predictor matrix and target feature into a data frame without row names
+dat <- data.frame(x = x, y = as.factor(y), row.names = NULL)
+
+svmfit <- svm(y~ ., data=dat, kernel='linear', cost =10, scale = FALSE)
+# plot(svmfit, dat)
+svmfit$index
+summary(svmfit)
+
+svmfit <- svm(y ~. , data=dat, kernel='linear', cost=0.1, scale=FALSE)
+
+#plot(svmfit, dat)
+#plot(y~. , dat)
+
+svmfit$index
+
+tune.out <- tune(svm, y~ ., data=dat, kernel='linear', ranges=list(cost=c(0.001, 0.01, 0.1, 1, 5, 10, 100)))
+
+summary(tune.out)
+
+bestmod <- tune.out$best.model 
+
+summary(bestmod)
+
+testset <- read_csv("testset.csv")
+#View(testset)
+
+xtest <- testset[,-1]
+ytest <- testset[,1]
+ytest <- ytest[!is.na(ytest)]
+
+View(testset)
+# combine the predictor matrix and target feature into a data frame without row names
+testdat <- data.frame(x = xtest, y = as.factor(ytest), row.names = NULL)
+
+ypred <- predict(bestmod, testdat)
+
+table(predict=ypred, truth=testdat$y)
+
+svmfit <- svm(y ~. , data=dat, kernel='linear', cost=.01, scale=FALSE)
+
+ypred <- predict(svmfit, testdat)
+
+table(predict=ypred, truth = testdat$y)
+
+# Create a confusion matrix and calculate accuracy
+conf_mat <- confusionMatrix(ypred, testdat$y)
+accuracy <- conf_mat$overall["Accuracy"]
+
+# Print the confusion matrix and accuracy
+print(conf_mat$table)
+cat("\nAccuracy:", round(accuracy, 2))
 
 
 ## a bagged version of CART (Zee)

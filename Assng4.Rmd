@@ -117,20 +117,27 @@ prd.fl <- predict(cv_model, newx = data.matrix(tumor_test[,-1]), s = c(cv_model$
 #Quadratic Discriminant Analysis (Lisa)
 
 ```{r}
-# Import the data
-trainset <- read_csv("trainset.csv")
-testset <- read_csv("testset.csv")
+# Import the data from CSV files
+trainset <- read_csv("trainset.csv") # Read training data from trainset.csv file
+testset <- read_csv("testset.csv") # Read test data from testset.csv file
 
-qda.fit =  qda(status ~ . , data=trainset)
+# Fit QDA model using the training data
+qda.fit = qda(status ~ . , data=trainset) # Status is the dependent variable and all other variables are independent.
 
+# Print the fitted model
 qda.fit
 
-# Fit into testset
-qda.class = predict(qda.fit, testset)$class
+# Use the fitted model to predict the status of testset
+qda.class = predict(qda.fit, testset)$class # Predict the class of the testset based on the fitted QDA model.
+
+# Create a contingency table to compare predicted and actual status of testset
 table(qda.class, testset$status)
 
-accuracy = mean(qda.class==testset$status)
-print(paste("Accuracy:", round(accuracy, 2)))
+# Calculate the accuracy of the prediction
+accuracy = mean(qda.class==testset$status) # Calculate the accuracy of the predicted values based on the actual values in the testset.
+
+# Print the accuracy
+print(paste("Accuracy:", round(accuracy, 2))) # Print the accuracy of the predicted values.
 ```
 
 ## KNN (Lisa)
@@ -265,43 +272,53 @@ There is no change in classification after pruning the tree. This suggests that 
 
 
 ```{r}
+# Read the training and test sets from CSV files
 trainset <- read_csv("trainset.csv")
 testset <- read_csv("testset.csv")
 
-
-
+# Extract the features (x) and target (y) variables from the training set
 x <- trainset[,-1]
 y <- trainset[,1]
+
+# Remove any missing target values
 y <- y[!is.na(y)]
 
-
+# Combine x and y into a new data frame
 dat <- data.frame(x = x, y=as.factor(y))
 
+# Train a support vector machine (SVM) with a linear kernel on the training data
 svmfit <- svm(y~., data=dat, kernel="linear", cost =1, scale=FALSE)
 
+# Plot the data with the SVM decision boundary
 plot(y~., data=dat, svmfit)
 
+# Print a summary of the trained SVM model
 summary(svmfit)
 
+# Tune the SVM hyperparameters using cross-validation on the training data
 svmfit <- svm(y~., data=dat, kernel='linear', cost=0.1, scale=FALSE)
-  
 set.seed(1)
 tune.out <- tune(svm, y ~ ., data=dat, kernel='linear', ranges=list(cost = c(0.001, 0.01, 0.1, 1, 3,5,10,100)))
 
+# Print a summary of the tuning results
 summary(tune.out)
 
-bestmod <- tune.out$best.model 
+# Extract the best performing SVM model from the tuning results
+bestmod <- tune.out$best.model
 summary(bestmod)
 
+# Extract the features (x) and target (y) variables from the test set
 xtest <- testset[,-1]
 ytest <- testset[,1]
+
+# Remove any missing target values
 ytest <- ytest[!is.na(ytest)]
 
+# Combine xtest and ytest into a new data frame
 testdat <- data.frame(x= xtest, y = as.factor(ytest))
 
+# Use the best SVM model to predict the target variable for the test data
 ypred <- predict(bestmod, testdat)
-
-table(predict= ypred, truth = testdat$y)
 
 # Create a confusion matrix and calculate accuracy
 conf_mat <- confusionMatrix(ypred, testdat$y)
@@ -310,6 +327,7 @@ accuracy <- conf_mat$overall["Accuracy"]
 # Print the confusion matrix and accuracy
 print(conf_mat$table)
 cat("\nAccuracy:", round(accuracy, 2))
+```
 
 ## a bagged version of CART (Zee)
 ```{r}

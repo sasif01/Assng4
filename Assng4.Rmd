@@ -25,6 +25,8 @@ library(class)
 library(e1071)
 library(readr)
 library(MASS)
+install.packages("mlbench")
+library(mlbench)
 
 ```
 
@@ -141,50 +143,105 @@ print(paste("Accuracy:", round(accuracy, 2))) # Print the accuracy of the predic
 ```
 
 ## KNN (Lisa)
-
+Test for k=1 and k=5, to see the accuracy, then test again with quadratic effects 
 ```{r}
 
+# Set the seed for reproducibility
+set.seed(123) 
+
 # Import the data
-trainset <- read_csv("trainset.csv")
-testset <- read_csv("testset.csv")
+trainset <- read.csv("trainset.csv")
+testset <- read.csv("testset.csv")
 
 # Separate the response variable from the predictors
-train.X <- trainset[, 2:30]
+train.X <- trainset[, 2:31]
 train.Direction <- trainset[, 1]
-test.X <- testset[, 2:30]
+test.X <- testset[, 2:31]
 test.Direction <- testset[, 1]
 
-# Set the seed for reproducibility
-set.seed(123)
+# Quadratic dataset
+train.Xsq <- train.X^2
+test.Xsq <- test.X^2 
 
+# Set status 
 train_status <- trainset$status
 test_status <- testset$status  
 
-# Fit the model to knn() function with k=1 
-knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 1)
+# Combine original squared predictors variable into new df
+train.X_all <- cbind(train.X, train.Xsq)
+test.X_all <- cbind(test.X, test.Xsq)
 
-#Create a confusion matrix
-confusion_matrix <- table(knn.pred, test_status)
+# Fit KNN model to new df 
+knn.pred_all <- knn(train=train.X_all, test=test.X_all, cl= train_status, k=1)
 
-# Print the confusion matrix
-print(confusion_matrix)
+# Create CM 
+# k=1 
+confusion_matrix_all_1 <- table(knn.pred_all, test_status)
+accuracy_all_1 <- sum(diag(confusion_matrix_all_1)) / sum(confusion_matrix_all_1)
 
-# Calculate the accuracy of the model
-accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-print(paste("Accuracy:", round(accuracy, 2)))
+print(accuracy_all_1)
+# Calculate feature importance based on reduction in accuracy when each feature is removed from the model. The higher the reduction in accuracy, the more important of the feature 
+# k=1
+importance_1 <- c()
+for (i in 1:ncol(train.X_all)) {
+  train.X_all_temp <- train.X_all[,-i]
+  test.X_all_temp <- test.X_all[,-i]
+  knn.pred_temp <- knn(train = train.X_all_temp, test = test.X_all_temp, cl = train_status, k = 1)
+  confusion_matrix_temp <- table(knn.pred_temp, test_status)
+  accuracy_temp <- sum(diag(confusion_matrix_temp)) / sum(confusion_matrix_temp)
+  importance_1[i] <- accuracy_all_1 - accuracy_temp
+}
 
-# Fit the KNN model
-knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 10)
+# Sort the feature importance values in descending order and select the top features 
+# k=1
+importance_order_1 <- order(importance_1, decreasing = TRUE)
+top_features_1 <- importance_order_1[1:5]
 
-# Create a confusion matrix
-confusion_matrix <- table(knn.pred, test_status)
+# Print
+cat("Top features for k=1:\n")
+# Print the top features and their importance values
+for (i in top_features_1) {
+  cat(names(train.X_all)[i], ": ", round(importance_1[i], 4), "\n")
+}
 
-# Print the confusion matrix
-print(confusion_matrix)
-
-# Calculate the accuracy of the model
-accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-print(paste("Accuracy:", round(accuracy, 2)))
+# # k=10
+# knn.pred_all_10 <- knn(train = train.X_all, test = test.X_all, cl = train_status, k = 10)
+# confusion_matrix_all_10 <- table(knn.pred_all_10, test_status)
+# accuracy_all_10 <- sum(diag(confusion_matrix_all_10)) / sum(confusion_matrix_all_10)
+# 
+# 
+# 
+# # Set the seed for reproducibility
+# set.seed(123)
+# 
+# train_status <- trainset$status
+# test_status <- testset$status  
+# 
+# # Fit the model to knn() function with k=1 
+# knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 1)
+# 
+# #Create a confusion matrix
+# confusion_matrix <- table(knn.pred, test_status)
+# 
+# # Print the confusion matrix
+# print(confusion_matrix)
+# 
+# # Calculate the accuracy of the model
+# accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+# print(paste("Accuracy:", round(accuracy, 2)))
+# 
+# # Fit the KNN model
+# knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 10)
+# 
+# # Create a confusion matrix
+# confusion_matrix <- table(knn.pred, test_status)
+# 
+# # Print the confusion matrix
+# print(confusion_matrix)
+# 
+# # Calculate the accuracy of the model
+# accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+# print(paste("Accuracy:", round(accuracy, 2)))
 
 ```
 
@@ -275,6 +332,9 @@ There is no change in classification after pruning the tree. This suggests that 
 # Read the training and test sets from CSV files
 trainset <- read_csv("trainset.csv")
 testset <- read_csv("testset.csv")
+
+
+
 
 # Extract the features (x) and target (y) variables from the training set
 x <- trainset[,-1]

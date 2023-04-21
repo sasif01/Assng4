@@ -144,6 +144,7 @@ print(paste("Accuracy:", round(accuracy, 2))) # Print the accuracy of the predic
 
 ## KNN (Lisa)
 Test for k=1 and k=5, to see the accuracy, then test again with quadratic effects 
+
 ```{r}
 # Set the seed for reproducibility
 set.seed(123) 
@@ -178,6 +179,14 @@ print(confusion_matrix)
 accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
 print(paste("Accuracy:", round(accuracy, 2)))
 
+# Calculate the sensitivity of the model 
+sensitivity <- 57/(57+3)
+print(paste("Sensitivity:", round(sensitivity,2)))
+
+# Calculate the specificity of the model 
+specificity <- 21/(21+4)
+print(paste("Specificity:", round(specificity,2)))
+
 # Fit the KNN model with k = 10 
 knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 10)
 
@@ -188,8 +197,16 @@ confusion_matrix <- table(knn.pred, test_status)
 print(confusion_matrix)
 
 # Calculate the accuracy of the model
-accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-print(paste("Accuracy:", round(accuracy, 2)))
+accuracy_k10 <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(paste("Accuracy:", round(accuracy_k10 , 2)))
+
+# Calculate the sensitivity of the model 
+sensitivity_k10 <- 58/(58+2)
+print(paste("Sensitivity:", round(sensitivity_k10,2)))
+
+# Calculate the specificity of the model 
+specificity <- 24/(24+1)
+print(paste("Specificity:", round(specificity,2)))
 
 # After increasing the k value from 1 to 10, the accuracy increased from 0.92 to 0.94. 
 
@@ -209,15 +226,32 @@ knn.pred_all <- knn(train=train.X_all, test=test.X_all, cl= train_status, k=1)
 # k=1 
 confusion_matrix_all_1 <- table(knn.pred_all, test_status)
 accuracy_all_1 <- sum(diag(confusion_matrix_all_1)) / sum(confusion_matrix_all_1)
+print(confusion_matrix_all_1)
+
+# Calculate the sensitivity of the model 
+sensitivity_all_1 <- 53/(53+7)
+print(paste("Sensitivity:", round(sensitivity_all_1,2)))
+
+# Calculate the specificity of the model 
+specificity_all_1 <- 22/(22+3)
+print(paste("Specificity:", round(specificity_all_1 ,2)))
 
 # k=10 
 knn.pred_all_10 <- knn(train = train.X_all, test = test.X_all, cl = train_status, k = 10)
 confusion_matrix_all_10 <- table(knn.pred_all_10, test_status)
 accuracy_all_10 <- sum(diag(confusion_matrix_all_10)) / sum(confusion_matrix_all_10)
 
-# Print out accuracy 
-print(accuracy_all_1)
-print(accuracy_all_10)
+# Print CM
+print(confusion_matrix_all_10)
+print(paste("Accuracy:", round(accuracy_all_10,2)))
+
+# Calculate the sensitivity of the model 
+sensitivity_all_10 <- 58/(58+2)
+print(paste("Sensitivity:", round(sensitivity_all_10,2)))
+
+# Calculate the specificity of the model 
+specificity_all_10 <- 22/(22+3)
+print(paste("Specificity:", round(specificity_all_10 ,2))) 
 
 # Calculate feature importance based on reduction in accuracy when each feature is removed from the model. The higher the reduction in accuracy, the more important of the feature 
 # k=1
@@ -259,12 +293,11 @@ for (i in top_features_1) {
 }
 
 # k=10
-# k=10
 cat("\nTop features for k=10:\n")
 for (i in top_features_10) {
   cat(names(train.X_all)[i], ": ", round(importance_10[i], 4), "\n")
-}
 
+}
 ```
 
 The result using k=1 are pretty good with 92% of observations are correctly predicted. When improving the number of k to 10, the accuracy increased to 95%. 

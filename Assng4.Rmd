@@ -34,8 +34,8 @@ library(dplyr)
 
 ```{r}
 # reading in training and testing dataset
-#tumor_train <- read_csv("/Users/sairaasif49/Downloads/trainset.csv")
-#tumor_test <- read_csv("/Users/sairaasif49/Downloads/testset.csv")
+tumor_train <- read_csv(file.choose())
+tumor_test <- read_csv(file.choose())
 
 # No missing/NA values is any columns
 apply(tumor_train, 2, function(x){sum(is.na(x))})
@@ -119,24 +119,21 @@ prd.fl <- predict(cv_model, newx = data.matrix(tumor_test[,-1]), s = c(cv_model$
 #Quadratic Discriminant Analysis (Lisa)
 
 ```{r}
-# Import the data from CSV files
-trainset <- read_csv("trainset.csv") # Read training data from trainset.csv file
-testset <- read_csv("testset.csv") # Read test data from testset.csv file
 
 # Fit QDA model using the training data
-qda.fit = qda(status ~ . , data=trainset) # Status is the dependent variable and all other variables are independent.
+qda.fit = qda(status ~ . , data=tumor_train) # Status is the dependent variable and all other variables are independent.
 
 # Print the fitted model
 qda.fit
 
 # Use the fitted model to predict the status of testset
-qda.class = predict(qda.fit, testset)$class # Predict the class of the testset based on the fitted QDA model.
+qda.class = predict(qda.fit, tumor_test)$class # Predict the class of the testset based on the fitted QDA model.
 
 # Create a contingency table to compare predicted and actual status of testset
-table(qda.class, testset$status)
+table(qda.class, tumor_test$status)
 
 # Calculate the accuracy of the prediction
-accuracy = mean(qda.class==testset$status) # Calculate the accuracy of the predicted values based on the actual values in the testset.
+accuracy = mean(qda.class==tumor_test$status) # Calculate the accuracy of the predicted values based on the actual values in the testset.
 
 # Print the accuracy
 print(paste("Accuracy:", round(accuracy, 2))) # Print the accuracy of the predicted values.
@@ -149,22 +146,18 @@ Test for k=1 and k=5, to see the accuracy, then test again with quadratic effect
 # Set the seed for reproducibility
 set.seed(123) 
 
-# Import the data
-trainset <- read.csv("trainset.csv")
-testset <- read.csv("testset.csv")
-
 # Separate the response variable from the predictors
-train.X <- trainset[, 2:31]
-train.Direction <- trainset[, 1]
-test.X <- testset[, 2:31]
-test.Direction <- testset[, 1]
+train.X <- tumor_train[, 2:31]
+train.Direction <- tumor_train[, 1]
+test.X <- tumor_test[, 2:31]
+test.Direction <- tumor_test[, 1]
 
 # Set the seed for reproducibility
 set.seed(123)
 
 # Set status
-train_status <- trainset$status
-test_status <- testset$status
+train_status <- tumor_train$status
+test_status <- tumor_test$status
 
 # Fit the model to knn() function with k=1
 knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 1)
@@ -385,9 +378,15 @@ There is no change in classification after pruning the tree. This suggests that 
 
 ```{r}
 
+<<<<<<< HEAD
 # Read the training and test sets from CSV files
 trainset <- read.csv("trainset.csv")
 testset <- read.csv("testset.csv")
+=======
+# Extract the features (x) and target (y) variables from the training set
+x <- tumor_train[,-1]
+y <- tumor_train[,1]
+>>>>>>> 9e02d802106832a3fd7341885ef8839edd8e7cd9
 
 # Select only the numeric columns from the training set
 x <- trainset[,2:31]
@@ -411,6 +410,7 @@ summary(tune.out)
 bestmod <- tune.out$best.model
 summary(bestmod)
 
+<<<<<<< HEAD
 # Select only the numeric columns from the test set
 xtest <- num_cols_test[,1:30]
 ytest <- testset$status
@@ -418,6 +418,17 @@ str(xtest)
 # Add quadratic terms for each feature
 xtest2 <- apply(xtest, 2, poly, degree=2, raw=TRUE)
 testdat <- data.frame(xtest2, y = as.factor(ytest))
+=======
+# Extract the features (x) and target (y) variables from the test set
+xtest <- tumor_test[,-1]
+ytest <- testset[,1]
+
+# Remove any missing target values
+ytest <- ytest[!is.na(ytest)]
+
+# Combine xtest and ytest into a new data frame
+testdat <- data.frame(x= xtest, y = as.factor(ytest))
+>>>>>>> 9e02d802106832a3fd7341885ef8839edd8e7cd9
 
 # Use the best SVM model to predict the target variable for the test data
 ypred <- predict(bestmod, testdat)
@@ -499,5 +510,6 @@ tab[3,] <- c(round(Acc*100, 2), round(SPES*100,2), round(SEN*100,2) )
 tab[4,]
 tab[5,] <- c(92.94,92, 93.33)
 tab[6,] <- c(94, 92, 95)
+tab
 ```
 

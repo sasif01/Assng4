@@ -34,8 +34,8 @@ library(dplyr)
 
 ```{r}
 # reading in training and testing dataset
-tumor_train <- read_csv(file.choose())
-tumor_test <- read_csv(file.choose())
+tumor_train <- read.csv("trainset.csv")
+tumor_test <- read.csv("testset.csv")
 
 # No missing/NA values is any columns
 apply(tumor_train, 2, function(x){sum(is.na(x))})
@@ -113,32 +113,30 @@ The model was accurate in its classification 92.94 % of the time. Overall, the r
 
 
 ## KNN (Lisa)
-Test for k=1 and k=5, to see the accuracy, then test again with quadratic effects 
+Test for k=3, to see the accuracy, then test again with quadratic effects 
 
 ```{r}
 
-# Read the training and test sets from CSV files
-trainset <- read.csv("trainset.csv")
-testset <- read.csv("testset.csv")
+## KNN Model
 
 # Set the seed for reproducibility
-set.seed(123) 
+set.seed(123)
 
 # Separate the response variable from the predictors
-train.X <- trainset[, 2:31]
-train.Direction <- trainset[, 1]
-test.X <- testset[, 2:31]
-test.Direction <- testset[, 1]
+train.X <- tumor_train[, -1]
+train.Direction <- tumor_train[, 1]
+test.X <- tumor_test[, -1]
+test.Direction <- tumor_test[, 1]
 
 # Set the seed for reproducibility
 set.seed(123)
 
 # Set status
-train_status <- trainset$status
-test_status <- testset$status
+train_status <- tumor_train$status
+test_status <- tumor_test$status
 
-# Fit the model to knn() function with k=1
-knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 1)
+# Fit the model to knn() function with k=3
+knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 3)
 
 #Create a confusion matrix
 confusion_matrix <- table(knn.pred, test_status)
@@ -146,139 +144,88 @@ confusion_matrix <- table(knn.pred, test_status)
 # Print the confusion matrix
 print(confusion_matrix)
 
-# Calculate the accuracy of the model
-accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-print(paste("Accuracy:", round(accuracy, 2)))
+# Calculate the accuracy, sensitivity, and specificity of the model
+accuracy <- (sum(diag(confusion_matrix)) / sum(confusion_matrix))*100
+sensitivity <- (confusion_matrix[2,2]/ (confusion_matrix[2,1] + confusion_matrix[2,2]))*100
+specificity <- (confusion_matrix[1,1] / (confusion_matrix[1,1] + confusion_matrix[1,2])) * 100
 
-# Calculate the sensitivity of the model 
-sensitivity <- 57/(57+3)
-print(paste("Sensitivity:", round(sensitivity,2)))
+# Print the sensitivity and specificity of the model
+cat("\nAccuracy:", round(accuracy, 2))
+cat("\nSensitivity:", round(sensitivity, 2))
+cat("\nSpecificity:", round(specificity, 2))
 
-# Calculate the specificity of the model 
-specificity <- 21/(21+4)
-print(paste("Specificity:", round(specificity,2)))
-
-# Fit the KNN model with k = 10 
-knn.pred <- knn(train = train.X, test = test.X, cl = train_status, k = 10)
-
-# Create a confusion matrix
-confusion_matrix <- table(knn.pred, test_status)
-
-# Print the confusion matrix
-print(confusion_matrix)
-
-# Calculate the accuracy of the model
-accuracy_k10 <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-print(paste("Accuracy:", round(accuracy_k10 , 2)))
-
-# Calculate the sensitivity of the model 
-sensitivity_k10 <- 58/(58+2)
-print(paste("Sensitivity:", round(sensitivity_k10,2)))
-
-# Calculate the specificity of the model 
-specificity <- 24/(24+1)
-print(paste("Specificity:", round(specificity,2)))
-
-# After increasing the k value from 1 to 10, the accuracy increased from 0.92 to 0.94. 
-
-## Adding quadratic effects
+# After increasing the k value from 1 to 10, the accuracy increased from 0.92 to 0.94.
+# Adding quadratic effects
 # Quadratic dataset
 train.Xsq <- train.X^2
-test.Xsq <- test.X^2 
+test.Xsq <- test.X^2
 
 # Combine original squared predictors variable into new df
 train.X_all <- cbind(train.X, train.Xsq)
 test.X_all <- cbind(test.X, test.Xsq)
 
-# Fit KNN model to new df 
-knn.pred_all <- knn(train=train.X_all, test=test.X_all, cl= train_status, k=1)
+# Fit KNN model to new df
+knn.pred_all <- knn(train=train.X_all, test=test.X_all, cl= train_status, k=3)
 
-# Create CM 
-# k=1 
-confusion_matrix_all_1 <- table(knn.pred_all, test_status)
-accuracy_all_1 <- sum(diag(confusion_matrix_all_1)) / sum(confusion_matrix_all_1)
-print(confusion_matrix_all_1)
+# Create CM
+# k=3
+confusion_matrix_all <- table(knn.pred_all, test_status)
 
-# Calculate the sensitivity of the model 
-sensitivity_all_1 <- 53/(53+7)
-print(paste("Sensitivity:", round(sensitivity_all_1,2)))
+# Calculate accuracy, sensitivity, specificity after using quadratic effects
+accuracy_sq <- (sum(diag(confusion_matrix_all)) / sum(confusion_matrix_all))*100
+sensitivity_sq <- (confusion_matrix_all[2,2]/ (confusion_matrix_all[2,1] + confusion_matrix_all[2,2]))*100
+specificity_sq <- (confusion_matrix_all[1,1] / (confusion_matrix_all[1,1] + confusion_matrix_all[1,2])) * 100
 
-# Calculate the specificity of the model 
-specificity_all_1 <- 22/(22+3)
-print(paste("Specificity:", round(specificity_all_1 ,2)))
+# Print the sensitivity and specificity of the model
+print(confusion_matrix_all)
+cat("\nAccuracy:", round(accuracy_sq, 2))
+cat("\nSensitivity:", round(sensitivity_sq, 2))
+cat("\nSpecificity:", round(specificity_sq, 2))
 
-# k=10 
-knn.pred_all_10 <- knn(train = train.X_all, test = test.X_all, cl = train_status, k = 10)
-confusion_matrix_all_10 <- table(knn.pred_all_10, test_status)
-accuracy_all_10 <- sum(diag(confusion_matrix_all_10)) / sum(confusion_matrix_all_10)
-
-# Print CM
-print(confusion_matrix_all_10)
-print(paste("Accuracy:", round(accuracy_all_10,2)))
-
-# Calculate the sensitivity of the model 
-sensitivity_all_10 <- 58/(58+2)
-print(paste("Sensitivity:", round(sensitivity_all_10,2)))
-
-# Calculate the specificity of the model 
-specificity_all_10 <- 22/(22+3)
-print(paste("Specificity:", round(specificity_all_10 ,2))) 
-
-# Calculate feature importance based on reduction in accuracy when each feature is removed from the model. The higher the reduction in accuracy, the more important of the feature 
-# k=1
+# Calculate feature importance based on reduction in accuracy when each feature is removed from the model. The higher the reduction in accuracy, the more important of the feature
+# k=3
 importance_1 <- c()
 for (i in 1:ncol(train.X_all)) {
   train.X_all_temp <- train.X_all[,-i]
   test.X_all_temp <- test.X_all[,-i]
   knn.pred_temp <- knn(train = train.X_all_temp, test = test.X_all_temp, cl = train_status, k = 1)
   confusion_matrix_temp <- table(knn.pred_temp, test_status)
-  accuracy_temp <- sum(diag(confusion_matrix_temp)) / sum(confusion_matrix_temp)
-  importance_1[i] <- accuracy_all_1 - accuracy_temp
+  accuracy_temp <- (sum(diag(confusion_matrix_temp)) / sum(confusion_matrix_temp))*100
+  importance_1[i] <- accuracy_sq - accuracy_temp
 }
 
-# k=10
-importance_10 <- c()
-for (i in 1:ncol(train.X_all)) {
-  train.X_all_temp <- train.X_all[,-i]
-  test.X_all_temp <- test.X_all[,-i]
-  knn.pred_temp <- knn(train = train.X_all_temp, test = test.X_all_temp, cl = train_status, k = 10)
-  confusion_matrix_temp <- table(knn.pred_temp, test_status)
-  accuracy_temp <- sum(diag(confusion_matrix_temp)) / sum(confusion_matrix_temp)
-  importance_10[i] <- accuracy_all_10 - accuracy_temp
-}
+# create a data frame to store the feature names and their importance scores
+importance_df <- data.frame(feature = names(train.X_all), importance_score = importance_1)
 
-# Sort the feature importance values in descending order and select the top features 
-# k=1
-importance_order_1 <- order(importance_1, decreasing = TRUE)
-top_features_1 <- importance_order_1[1:5]
+# sort the data frame by importance score in descending order
+importance_df <- importance_df[order(importance_df$importance_score, decreasing = TRUE),]
 
-# k=10
-importance_order_10 <- order(importance_10, decreasing = TRUE)
-top_features_10 <- importance_order_10[1:5]
+# print the top 5 most important features
+cat("Top 5 most important features:\n")
+print(head(importance_df, n = 5), row.names = FALSE)
 
-# Print
-cat("Top features for k=1:\n")
-# Print the top features and their importance values
-for (i in top_features_1) {
-  cat(names(train.X_all)[i], "\n")
+# Create a bar plot to compare the performance of the two models
+accuracy_data <- data.frame(Model = c("KNN (k=3)", "KNN (k=3) with quadratic effects"),
+                            Accuracy = c(accuracy, accuracy_sq),
+                            Sensitivity = c(sensitivity, sensitivity_sq),
+                            Specificity = c(specificity, specificity_sq))
 
-}
-# for (i in top_features_1) {
-#   cat(names(train.X_all)[i], ": ", round(importance_1[i], 4), "\n")
-# }
+library(ggplot2)
+library(tidyr)
 
-# k=10
-cat("\nTop features for k=10:\n")
+accuracy_data_long <- gather(accuracy_data, "Metric", "Score", -Model)
 
-for (i in top_features_10) {
-  cat(names(train.X_all)[i], "\n")
-# for (i in top_features_10) {
-#   cat(names(train.X_all)[i], ": ", round(importance_10[i], 4), "\n")
-
-}
+ggplot(accuracy_data_long, aes(x = Model, y = Score, fill = Metric)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Performance of KNN models",
+       subtitle = "Comparison of models with and without quadratic effects",
+       x = "Model", y = "Score (%)") +
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07")) +
+  theme_minimal()
 ```
-
-The result using k=1 are pretty good with 92% of observations are correctly predicted. When improving the number of k to 10, the accuracy increased to 95%. 
+K-nearest neighbors (KNN) classification was used as a non-parametric method in statistical learning. The k value is a hyperparameter that determines the number of nearest neighbors in the training set used to assign a test observation to a class. The model was fitted to the knn() function with k=3. To evaluate the performance of the model, a confusion matrix was created, and the accuracy, sensitivity, and specificity were calculated, which yielded an accuracy of 91.76%, sensitivity of 87.5%, and specificity of 93.44%. 
+Next, quadratic effects were incorporated into the model, resulting in an improvement in classification performance. The accuracy of the model increased to 92.94%, sensitivity to 88%, and specificity to 95%. This result is expected since KNN is a non-parametric algorithm that relies on calculating distances between the data points to make predictions, so when the quadratic effects are added, they can help to capture non-linear relationships between variables and help improve the accuracy of the KNN models. 
+To identify the most important features, feature importance scores were calculated based on the reduction in accuracy when each feature was removed from the model. The top five most important features were X24, X1, X2, X3, and X4, with importance scores of 5.882353, 4.705882, 4.705882, 4.705882, and 4.705882, respectively. Overall, these results suggest that the inclusion of quadratic effects led to an improvement in the model's performance. The feature importance analysis also revealed that X24 was the most important feature in the classification task, highlighting its crucial role in predicting the outcome.
 
 ## a fully grown classification/regression tree (CART) (Saira)
 
@@ -341,13 +288,14 @@ There is no change in classification after pruning the tree. This suggests that 
 ## support vector machine (Lisa)
 
 ```{r}
+## SVM 
 # Read the training and test sets from CSV files
-trainset <- read.csv("trainset.csv")
-testset <- read.csv("testset.csv")
+tumor_train <- read.csv("tumor_train.csv")
+tumor_test <- read.csv("tumor_test.csv")
 
 # Select only the numeric columns from the training set
-x <- trainset[,2:31]
-y <- trainset$status
+x <- tumor_train[,-1]
+y <- tumor_train[,1]
 
 # Create a data frame with x and y columns
 dat <- data.frame(x=x, y=as.factor(y))
@@ -367,8 +315,8 @@ bestmod <- tune.out$best.model
 summary(bestmod)
 
 # Select only the numeric columns from the test set
-xtest <- testset[,2:31]
-ytest <- testset$status
+xtest <- tumor_test[,-1]
+ytest <- tumor_test[,1]
 
 # Create a data frame with xtest and ytest columns
 testdat <- data.frame(x=xtest, y= as.factor(ytest))
@@ -377,12 +325,16 @@ testdat <- data.frame(x=xtest, y= as.factor(ytest))
 ypred <- predict(bestmod, testdat)
 
 # Create a confusion matrix and calculate accuracy
-conf_mat <- confusionMatrix(ypred, testdat$y)
-accuracy <- conf_mat$overall["Accuracy"]
+conf_mat <- table(ypred, testdat$y)
+accuracy <- (sum(diag(conf_mat)) / sum(conf_mat))*100
+sensitivity <- (conf_mat[2,2]/ (conf_mat[2,1] + conf_mat[2,2]))*100
+specificity <- (conf_mat[1,1] / (conf_mat[1,1] + conf_mat[1,2])) * 100
 
 # Print the confusion matrix and accuracy
-print(conf_mat$table)
+print(conf_mat)
 cat("\nAccuracy:", round(accuracy, 2))
+cat("\nSensitivity:", round(sensitivity, 2))
+cat("\nSpecificity:", round(specificity, 2))
 
 # Adding quadratic terms for each feature
 x2 <- apply(x, 2, poly, degree=2, raw=TRUE)
@@ -412,29 +364,37 @@ testdat2 <- data.frame(xtest2, y = as.factor(ytest))
 ypred2 <- predict(bestmod2, testdat2)
 
 # Create a confusion matrix and calculate accuracy with quadratic terms
-conf_mat2 <- confusionMatrix(ypred2, testdat2$y)
-accuracy2 <- conf_mat$overall["Accuracy"]
+conf_mat2 <- table(ypred2, testdat2$y)
+accuracy2 <- (sum(diag(conf_mat2)) / sum(conf_mat2))*100
+sensitivity2 <- (conf_mat2[2,2]/ (conf_mat2[2,1] + conf_mat2[2,2]))*100
+specificity2 <- (conf_mat2[1,1] / (conf_mat2[1,1] + conf_mat2[1,2])) * 100
 
 # Print the confusion matrix and accuracy with quadratic terms
-print(conf_mat2$table)
+print(conf_mat2)
 cat("\nAccuracy:", round(accuracy2, 2))
+cat("\nSensitivity:", round(sensitivity2, 2))
+cat("\nSpecificity:", round(specificity2, 2))
 
 # Calculate feature importance based on decrease in accuracy when each feature is removed
-importance2 <- c()
-for (i in 1:ncol(dat2[,2:31])) {
-  dat2_temp <- dat2[,-i]
+importance2 <- data.frame(feature = character(ncol(dat2[, 2:31])), importance = numeric(ncol(dat2[, 2:31])))
+for (i in 1:ncol(dat2[, 2:31])) {
+  dat2_temp <- dat2[, -i]
   svmfit2_temp <- svm(y ~ ., data = dat2_temp, kernel = "linear", cost = 0.1, scale = FALSE)
   ypred2_temp <- predict(svmfit2_temp, testdat2)
-  conf_mat2_temp <- confusionMatrix(ypred2_temp, testdat2$y)
-  accuracy2_temp <- conf_mat2_temp$overall["Accuracy"]
-  importance2[i] <- accuracy2 - accuracy2_temp
+  conf_mat2_temp <- table(ypred2_temp, testdat2$y)
+  accuracy2_temp <- (sum(diag(conf_mat2_temp)) / sum(conf_mat2_temp)) * 100
+  importance2$importance[i] <- accuracy2 - accuracy2_temp
+  importance2$feature[i] <- colnames(dat2)[i]
 }
 
 # Rank features by importance and highlight top 5
-ranked_importance2 <- order(importance2, decreasing = TRUE)
-top_5_2 <- ranked_importance2[1:5]
+ranked_importance2 <- importance2[order(importance2$importance, decreasing = TRUE), ]
+top_5_2 <- ranked_importance2$feature[1:5]
 cat("\nTop 5 most important features (including quadratic effects):\n")
-cat(colnames(dat2)[top_5_2], sep = "\n")
+cat(top_5_2, sep = "\n")
+
+# View importance scores for all features
+print(head(ranked_importance2, n = 5), row.names = FALSE)
 
 ```
 

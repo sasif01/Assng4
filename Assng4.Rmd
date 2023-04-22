@@ -377,27 +377,19 @@ There is no change in classification after pruning the tree. This suggests that 
 
 
 ```{r}
-
-<<<<<<< HEAD
 # Read the training and test sets from CSV files
 trainset <- read.csv("trainset.csv")
 testset <- read.csv("testset.csv")
-=======
-# Extract the features (x) and target (y) variables from the training set
-x <- tumor_train[,-1]
-y <- tumor_train[,1]
->>>>>>> 9e02d802106832a3fd7341885ef8839edd8e7cd9
 
 # Select only the numeric columns from the training set
 x <- trainset[,2:31]
 y <- trainset$status
 
-# Add quadratic terms for each feature
-x2 <- apply(x, 2, poly, degree=2, raw=TRUE)
-dat <- data.frame(x2, y=as.factor(y))
+# Create a data frame with x and y columns
+dat <- data.frame(x=x, y=as.factor(y))
 
 # Train a support vector machine (SVM) with a linear kernel on the training data
-svmfit <- svm(y~., data=dat, kernel="linear", cost =1, scale=FALSE)
+svmfit <- svm(y~., data=dat, kernel="linear", cost =0.1, scale=FALSE)
 
 # Tune the SVM hyperparameters using cross-validation on the training data
 set.seed(1)
@@ -410,25 +402,12 @@ summary(tune.out)
 bestmod <- tune.out$best.model
 summary(bestmod)
 
-<<<<<<< HEAD
 # Select only the numeric columns from the test set
-xtest <- num_cols_test[,1:30]
+xtest <- testset[,2:31]
 ytest <- testset$status
-str(xtest)
-# Add quadratic terms for each feature
-xtest2 <- apply(xtest, 2, poly, degree=2, raw=TRUE)
-testdat <- data.frame(xtest2, y = as.factor(ytest))
-=======
-# Extract the features (x) and target (y) variables from the test set
-xtest <- tumor_test[,-1]
-ytest <- testset[,1]
 
-# Remove any missing target values
-ytest <- ytest[!is.na(ytest)]
-
-# Combine xtest and ytest into a new data frame
-testdat <- data.frame(x= xtest, y = as.factor(ytest))
->>>>>>> 9e02d802106832a3fd7341885ef8839edd8e7cd9
+# Create a data frame with xtest and ytest columns
+testdat <- data.frame(x=xtest, y= as.factor(ytest))
 
 # Use the best SVM model to predict the target variable for the test data
 ypred <- predict(bestmod, testdat)
@@ -441,6 +420,40 @@ accuracy <- conf_mat$overall["Accuracy"]
 print(conf_mat$table)
 cat("\nAccuracy:", round(accuracy, 2))
 
+# Adding quadratic terms for each feature
+x2 <- apply(x, 2, poly, degree=2, raw=TRUE)
+
+# Create a new data frame with quadratic terms
+dat2 <- data.frame(x2, y=as.factor(y)) 
+
+# Train a support vector machine (SVM) with a linear kernel on the training data with quadratic terms
+svmfit2 <- svm(y~., data=dat2, kernel="linear", cost=0.1, scale=FALSE)
+
+# Tune the SVM hyperparameters using cross-validation on the training data with quadratic terms
+set.seed(2)
+tune.out2 <- tune(svm, y~., data=dat2, kernel="linear", ranges=list(cost = c(0.001, 0.01, 0.1, 1, 3,5,10,100)))
+
+# Print a summary of the tuning results with quadratic terms
+summary(tune.out2)
+
+# Extract the best performing SVM model from the tuning results with quadratic terms
+bestmod2 <- tune.out2$best.model
+summary(bestmod2)
+
+# Add quadratic terms for each feature in the test data
+xtest2 <- apply(xtest, 2, poly, degree=2, raw=TRUE)
+testdat2 <- data.frame(xtest2, y = as.factor(ytest))
+
+# Use the best SVM model to predict the target variable for the test data with quadratic terms
+ypred2 <- predict(bestmod2, testdat2)
+
+# Create a confusion matrix and calculate accuracy with quadratic terms
+conf_mat2 <- confusionMatrix(ypred2, testdat2$y)
+accuracy2 <- conf_mat$overall["Accuracy"]
+
+# Print the confusion matrix and accuracy with quadratic terms
+print(conf_mat2$table)
+cat("\nAccuracy:", round(accuracy2, 2))
 
 ```
 

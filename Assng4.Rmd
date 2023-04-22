@@ -1,6 +1,6 @@
 ---
 title: "Assng4"
-author: "Saira Asif"
+author: "Saira Asif" , "Lisa Tran"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -289,10 +289,6 @@ There is no change in classification after pruning the tree. This suggests that 
 
 ```{r}
 ## SVM 
-# Read the training and test sets from CSV files
-tumor_train <- read.csv("tumor_train.csv")
-tumor_test <- read.csv("tumor_test.csv")
-
 # Select only the numeric columns from the training set
 x <- tumor_train[,-1]
 y <- tumor_train[,1]
@@ -397,6 +393,9 @@ cat(top_5_2, sep = "\n")
 print(head(ranked_importance2, n = 5), row.names = FALSE)
 
 ```
+Support Vector Machines (SVM) is based on the idea of finding a hyperplane in a high-dimensional space that maximally separates different classes of data points. The objective of SVM is to find the best boundary or hyperplane that can correctly classify new data points based on their features. In this study, SVM is trained on linear kernels. The hyperparameters of the SVM were optimized by performing 10-fold cross-validation on the training data. The training data was also used to train the SVM with quadratic terms for each feature. Accuracy, sensitivity, and specificity were used to evaluate the performance of the SVM on the test data.
+The best performing linear SVM was obtained with a cost parameter of 0.01, resulting in an accuracy of 97.65%. The model achieved a sensitivity of 100% and a specificity of 96.77%. After adding quadratic effects, the SVM trained with quadratic terms for each feature achieved an accuracy of 94.12% with the best cost parameter of 3. The sensitivity and specificity of the model were 91.67% and 95.08%, respectively. The most important feature is X1, with an importance score of 72.94%, followed by X9 (51.76%), X4 (43.53%), X8 (42.94%), and X28 (38.82%). 
+Overall, it was observed that the linear SVM without quadratic terms performed the best on the test set, with a higher accuracy than the SVM with quadratic terms. This result is expected since the accuracy, sensitivity and specificity of the model without quadratic effects were already very accurate, adding the quadratic effects may increase the complexity of the SVM model by introducing more variables and a non-linear decision boundary leading to overfitting, therefore decreasing accuracy. 
 
 ## a bagged version of CART (Zee)
 ```{r}

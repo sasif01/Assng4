@@ -287,42 +287,33 @@ The result using k=1 are pretty good with 92% of observations are correctly pred
 
 ## a fully grown classification/regression tree (CART) (Saira)
 
-The training set is used to build a classification trees. The rpart function takes in a model with the status as the response and the 30 variables as predictors. 
+The training set is used to build a classification trees. The rpart function takes in a model with the status as the response and the 30 variables as predictors. The model is very accurate, with 90.59% of predicted classification being same as observed.
 
 ```{r}
 
 # Fitting a classification tree to tumor dataset
 class_tree <- rpart(status ~ ., data=tumor_train, method = "class")
 
+# summary of classification tree
 summary(class_tree)
 
-# Visualizing the unpruned tree
+# Figure # : Visualizing the unpruned classification tree consisting of relevant predictors to classify tumor status 
 rpart.plot(class_tree)
 
 
-# Checking the order of variable importance
+# Checking the importance of key predictors to the classification tree
 class_tree$variable.importance
 
 # Checking model fit on testing dataset
-pred_tree = predict(class_tree, tumor_test, type = "class")
+pred_tree = predict(class_tree, tumor_test[2:31], type = "class")
 
-# Compairing the preditced reuslt w
-table_fit <- table(pred_tree,tumor_test$status)  ################# could also just do confusionMatrix(table(pred_tree,tumor_test$status)) to get stats on model
 
-TP = table_fit[1]
-TN = table_fit[2,2]
-FN = table_fit[2]
-FP =  table_fit[1,2]
+# Confusion matrix of expected by predicted results as well as metric of Accuracy, Sensitivity and Specificity. 
+confusionMatrix(table(pred_tree,tumor_test$status))
 
-#Accuracy of the model is 90.58824
-(Acc = (TP+TN)/(TP+TN+FP+FN)) * 100
-
-#Sensitivity of model is 88.33333
-(SEN = TP/(TP+FN)) * 100
-
-# Specificity of the model is  96
-(SPES = TN/(TN+FP)) * 100
-
+# Accuracy : 0.9059
+# Sensitivity : 0.8833          
+# Specificity : 0.9600 
 
 ```
 
@@ -330,34 +321,23 @@ We can also check if pruning the tree will improve results. Pruning selects the 
 
 ```{r}
 # Checking if pruning will improve results 
-#plotcp(fit.tree)
 printcp(class_tree)
 
-# Explicitly request the lowest cp value
+# Explicitly request the lowest complexity parameter (cp) value
 bestcp <- class_tree$cptable[which.min(class_tree$cptable[,"xerror"]),"CP"]
 pruned_tree <- prune(class_tree, cp = bestcp)
 rpart.plot(pruned_tree)
 
+# Pruned model has 9 important predictors, the unpruned tree used 11.
+pruned_tree$variable.importance 
+
+
 # Alternate specification 
 pred_prune = predict(pruned_tree, tumor_test, type="class")
 
-pruned_table <- table(pred_prune, tumor_test$status)
-
-TP2 = pruned_table[1]
-TN2 = pruned_table[2,2]
-FN2 = pruned_table[2]
-FP2 =  pruned_table[1,2]
-
-#Accuracy of the model is 90.58824
-(Acc2 = (TP2+TN2)/(TP2+TN2+FP2+FN2)) * 100
-
-#Sensitivity of model is 68.83117
-
-(SEN2 = TP2/(TP2+FN2)) * 100
-
-# Specificity of the model is  96
-(SPES2 = TN2/(TN2+FP2)) * 100
-
+# Accuracy, Specificity and Sensitivity reuslts are almost the same as before
+# No significant change is made when the tree is pruned
+confusionMatrix(table(pred_prune,tumor_test$status))
 
 ```
 There is no change in classification after pruning the tree. This suggests that pruning is not necessary for this tree

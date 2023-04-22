@@ -27,7 +27,7 @@ library(readr)
 library(MASS)
 install.packages("mlbench")
 library(mlbench)
-
+library(dplyr)
 ```
 
 ## DATA
@@ -384,31 +384,23 @@ There is no change in classification after pruning the tree. This suggests that 
 
 
 ```{r}
+
 # Read the training and test sets from CSV files
-trainset <- read_csv("trainset.csv")
-testset <- read_csv("testset.csv")
+trainset <- read.csv("trainset.csv")
+testset <- read.csv("testset.csv")
 
-# Extract the features (x) and target (y) variables from the training set
-x <- trainset[,-1]
-y <- trainset[,1]
+# Select only the numeric columns from the training set
+x <- trainset[,2:31]
+y <- trainset$status
 
-# Remove any missing target values
-y <- y[!is.na(y)]
-
-# Combine x and y into a new data frame
-dat <- data.frame(x = x, y=as.factor(y))
+# Add quadratic terms for each feature
+x2 <- apply(x, 2, poly, degree=2, raw=TRUE)
+dat <- data.frame(x2, y=as.factor(y))
 
 # Train a support vector machine (SVM) with a linear kernel on the training data
 svmfit <- svm(y~., data=dat, kernel="linear", cost =1, scale=FALSE)
 
-# Plot the data with the SVM decision boundary
-plot(y~., data=dat, svmfit)
-
-# Print a summary of the trained SVM model
-summary(svmfit)
-
 # Tune the SVM hyperparameters using cross-validation on the training data
-svmfit <- svm(y~., data=dat, kernel='linear', cost=0.1, scale=FALSE)
 set.seed(1)
 tune.out <- tune(svm, y ~ ., data=dat, kernel='linear', ranges=list(cost = c(0.001, 0.01, 0.1, 1, 3,5,10,100)))
 
@@ -419,15 +411,13 @@ summary(tune.out)
 bestmod <- tune.out$best.model
 summary(bestmod)
 
-# Extract the features (x) and target (y) variables from the test set
-xtest <- testset[,-1]
-ytest <- testset[,1]
-
-# Remove any missing target values
-ytest <- ytest[!is.na(ytest)]
-
-# Combine xtest and ytest into a new data frame
-testdat <- data.frame(x= xtest, y = as.factor(ytest))
+# Select only the numeric columns from the test set
+xtest <- num_cols_test[,1:30]
+ytest <- testset$status
+str(xtest)
+# Add quadratic terms for each feature
+xtest2 <- apply(xtest, 2, poly, degree=2, raw=TRUE)
+testdat <- data.frame(xtest2, y = as.factor(ytest))
 
 # Use the best SVM model to predict the target variable for the test data
 ypred <- predict(bestmod, testdat)
@@ -439,6 +429,8 @@ accuracy <- conf_mat$overall["Accuracy"]
 # Print the confusion matrix and accuracy
 print(conf_mat$table)
 cat("\nAccuracy:", round(accuracy, 2))
+
+
 ```
 
 ## a bagged version of CART (Zee)
@@ -471,8 +463,6 @@ confusionMatrix(table(bag_CART_pred,tumor_test$status))
 #Specificity=92%
 ```
 
-
-
 ## random forests. (Zee)
 ```{r}
 #for reproducible results
@@ -500,11 +490,13 @@ confusionMatrix(table(randomforest_test,tumor_test$status))
 
 ```{r}
 tab <- matrix( ncol=3, nrow=6,byrow=TRUE)
-rownames(tab) <- c("Elastic Net", "KNN", "CART", "SVM", "Bagged CART", "Random Forest")
+rownames(tab) <- c("Elastic Net", "KNN", "KNN_sq", "CART", "SVM", "SVM_sq", "Bagged CART", "Random Forest")
 colnames(tab) <- c("Acc", "Specificity", "Sensitivity")
 
 tab[1,] <-
+tab[2,] <- c()
 tab[3,] <- c(round(Acc*100, 2), round(SPES*100,2), round(SEN*100,2) )
+tab[4,]
 tab[5,] <- c(92.94,92, 93.33)
 tab[6,] <- c(94, 92, 95)
 ```

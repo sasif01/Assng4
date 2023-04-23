@@ -59,8 +59,8 @@ colnames(sq_train) <- paste(colnames(sq_train), "^2", sep = "")
 colnames(sq_test) <- paste(colnames(sq_test), "^2", sep = "")
 
 # Combining the two dataframes together for modeling 
-tumor_train <- cbind(tumor_train, sq_train)
-tumor_test <- cbind(tumor_test, sq_test)
+tumor_trainSA <- cbind(tumor_train, sq_train)
+tumor_testSA <- cbind(tumor_test, sq_test)
 
 ```
 
@@ -70,12 +70,12 @@ LASSO package glmnet requires the the response variable to be a vector and the s
 
 ```{r}
 #define response variable as vector 
-status <- tumor_train$status
+status <- tumor_trainSA$status
 # dim is NULL as it is a vector, not a matrix
 dim(status)
 
 #define matrix of predictor variables
-xs <- data.matrix(tumor_train[, -1])
+xs <- data.matrix(tumor_trainSA[, -1])
 dim(xs)
 # Variance is different across predictors, so it has not been standardized, however glmnet automatically standardizes the variables
 apply(xs, 2, var)
@@ -91,7 +91,7 @@ enet <- trainControl(method = "cv", number = 10)
 elasticGrid <- expand.grid(.alpha = seq(0, 1, length = 10), .lambda = seq(.5, 7.5, 1))
 
 #cv.glmnet for computing penalized linear regression models.
-def_elnet = train(status ~ ., data=tumor_train, method = "glmnet", trControl = enet, tuneGrid = elasticGrid)
+def_elnet = train(status ~ ., data=tumor_trainSA, method = "glmnet", trControl = enet, tuneGrid = elasticGrid)
 
 # results for each combination of alpha and lambda
 def_elnet$results
@@ -119,10 +119,10 @@ train_enet
 coef(def_elnet$finalModel, def_elnet$bestTune$lambda)
 
 # Make predictions using testing dataset
-predictions <- def_elnet %>% predict(tumor_test)
+predictions <- def_elnet %>% predict(tumor_testSA)
 
 # Confusion matrix of expected by predicted results as well as metric of Accuracy, Sensitivity and Specificity. 
-confusionMatrix(table(predictions, as.vector(tumor_test$status)))
+confusionMatrix(table(predictions, as.vector(tumor_testSA$status)))
 
 ```
 The model was accurate in its classification 94.12 % of the time. Overall, the results of elastic net indicate that ridge regression be maintained to maximize prediction accuracy.
@@ -250,7 +250,7 @@ The training set is used to build a classification trees. The rpart function tak
 ```{r}
 
 # Fitting a classification tree to tumor dataset
-class_tree <- rpart(status ~ ., data=tumor_train, method = "class")
+class_tree <- rpart(status ~ ., data=tumor_trainSA, method = "class")
 
 # summary of classification tree
 summary(class_tree)
@@ -262,11 +262,11 @@ rpart.plot(class_tree)
 class_tree$variable.importance
 
 # Checking model fit on testing dataset
-pred_tree = predict(class_tree, tumor_test[2:61], type = "class")
+pred_tree = predict(class_tree, tumor_testSA[2:61], type = "class")
 
 
 # Confusion matrix of expected by predicted results as well as metric of Accuracy, Sensitivity and Specificity. 
-confusionMatrix(table(pred_tree,tumor_test$status))
+confusionMatrix(table(pred_tree,tumor_testSA$status))
 
 # Accuracy : 0.9059
 # Sensitivity : 0.8833          
@@ -290,11 +290,11 @@ pruned_tree$variable.importance
 
 
 # Alternate specification 
-pred_prune = predict(pruned_tree, tumor_test, type="class")
+pred_prune = predict(pruned_tree, tumor_testSA[-1], type="class")
 
 # Accuracy, Specificity and Sensitivity reuslts are almost the same as before
 # No significant change is made when the tree is pruned
-confusionMatrix(table(pred_prune,tumor_test$status))
+confusionMatrix(table(pred_prune,tumor_testSA$status))
 
 ```
 There is no change in classification after pruning the tree. This suggests that pruning is not necessary for this tree

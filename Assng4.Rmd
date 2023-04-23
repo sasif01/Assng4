@@ -37,6 +37,9 @@ library(dplyr)
 tumor_train <- read.csv("trainset.csv")
 tumor_test <- read.csv("testset.csv")
 
+tumor_train <- read.csv("/Users/sairaasif49/Downloads/trainset.csv")
+tumor_test <- read.csv("/Users/sairaasif49/Downloads//testset.csv")
+
 # No missing/NA values is any columns
 apply(tumor_train, 2, function(x){sum(is.na(x))})
 
@@ -122,7 +125,7 @@ predictions <- def_elnet %>% predict(tumor_test)
 confusionMatrix(table(predictions, as.vector(tumor_test$status)))
 
 ```
-The model was accurate in its classification 92.94 % of the time. Overall, the results of elastic net indicate that ridge regression be maintained to maximize prediction accuracy.
+The model was accurate in its classification 94.12 % of the time. Overall, the results of elastic net indicate that ridge regression be maintained to maximize prediction accuracy.
 
 
 ## KNN (Lisa)
@@ -255,12 +258,11 @@ summary(class_tree)
 # Figure # : Visualizing the unpruned classification tree consisting of relevant predictors to classify tumor status 
 rpart.plot(class_tree)
 
-
 # Checking the importance of key predictors to the classification tree
 class_tree$variable.importance
 
 # Checking model fit on testing dataset
-pred_tree = predict(class_tree, tumor_test[2:31], type = "class")
+pred_tree = predict(class_tree, tumor_test[2:61], type = "class")
 
 
 # Confusion matrix of expected by predicted results as well as metric of Accuracy, Sensitivity and Specificity. 
@@ -548,7 +550,7 @@ tab <- matrix( ncol=3, nrow=6,byrow=TRUE)
 rownames(tab) <- c("Elastic Net", "KNN", "CART", "SVM", "Bagged CART", "Random Forest")
 colnames(tab) <- c("Acc", "Specificity", "Sensitivity")
 
-tab[1,] <- c(92.94, 80.00, 98.33)
+tab[1,] <- c(94.12, 80.00, 100)
 tab[2,] <- c(91.76, 93.44, 87.50)
 tab[3,] <- c(90.59, 96.00, 88.33 )
 tab[4,] <- c(97.65, 100, 96.77)

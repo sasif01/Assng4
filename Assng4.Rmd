@@ -25,7 +25,7 @@ library(class)
 library(e1071)
 library(readr)
 library(MASS)
-install.packages("mlbench")
+#install.packages("mlbench")
 library(mlbench)
 library(dplyr)
 ```
@@ -405,19 +405,6 @@ bag<-bagging(status~., data=tumor_train, nbagg=150, coob=T)
 bag
 #Out-of-bag estimate of misclassification error:  0.0455
 
-#most import variables for model
-imp <- data.frame(var=names(tumor_train[,-1]), imp=varImp(bag))
-
-#sort variable importance descending
-VI_plot <- imp[order(imp$Overall, decreasing=TRUE),]
-
-#visualize variable importance with horizontal bar plot
-barplot(VI_plot$Overall,
-        names.arg=rownames(VI_plot),
-        horiz=TRUE,
-        col='steelblue',
-        xlab='Variable Importance')
-
 bag_CART_pred<-predict(bag, newdata=tumor_test, type="class")
 
 #confusionmatrix
@@ -433,12 +420,9 @@ confusionMatrix(table(bag_CART_pred,tumor_test$status))
 set.seed(751)
 
 #Creating random forest model
-randomforest_model<-randomForest(status~., data=tumor_train)
+randomforest_model<-randomForest(status~., data=tumor_train, mtry=5, ntree=500)
 randomforest_model
 #random forest classification with 500 trees generated at each node, which splits into 5 smaller nodes
-
-#visualization of most important variables in the model
-varImpPlot(randomforest_model) 
 
 #testing the model on unseen data
 randomforest_test <- predict(randomforest_model, newdata = tumor_test, type= "class")
@@ -447,7 +431,9 @@ randomforest_test <- predict(randomforest_model, newdata = tumor_test, type= "cl
 confusionMatrix(table(randomforest_test,tumor_test$status)) 
 ###Accuracy= 94%
 ##Sensitivity= 95%
-##Specificity= 92%  
+##Specificity= 92%
+
+##
 ```
 
 ## Final table 

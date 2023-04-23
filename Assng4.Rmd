@@ -467,11 +467,11 @@ ntree_values<-c(50, 100, 150, 200, 300, 400, 500)
 for (ntree in ntree_values) {
   rf_model <- randomForest(status ~ ., 
                             data = tumor_train, 
-                            ntree = ntree, mtry=5.477226)}
+                            ntree = ntree, mtry=5.477226)
+print(paste0("ntree =", ntree, " | OOB error =", round(rf_model$err.rate[ntree, "OOB"], 4)))
+}
 
-print(paste0("ntree =", ntree, " | OOB error =", round(1 - rf_model$err.rate[ntree, "OOB"], 4)))
-
-#highest accuracy at ntree=500 of 96.28%
+#highest accuracy at ntree=150 of 96.69%
 set.seed(751)
 randomforest_model<-randomForest(status ~ ., data = tumor_train, ntree = 500, mtry=5.477226)
 #testing the model on unseen data
@@ -495,16 +495,25 @@ rf_default <- train(status~.,
                       metric='Accuracy', 
                       tuneGrid=tunegrid, 
                       trControl=control)
-print(rf_default) #Accuracy of 95.86% at a value of 5.477226
+print(rf_default) #Accuracy of 96.71% at a value of 7.745967
 set.seed(751)
 ntree_values<-c(50, 100, 150, 200, 300, 400, 500)
 for (ntree in ntree_values) {
   rf_model <- randomForest(status ~ ., 
-                            data = tumor_train, 
-                            ntree = ntree, mtry=5.477226)}
+                            data = train_squared, 
+                            ntree = ntree, mtry=7.745967)
+print(paste0("ntree =", ntree, " | OOB error =", round(rf_model$err.rate[ntree, "OOB"], 4)))
+}
+#lowest OOb with 50 trees
 
-randomforest_model<-randomForest(status~., data=train_squared, mtry=5, ntree=500)
-randomforest_model
+randomforest_model<-randomForest(status~., data=train_squared, mtry=7.745967, ntree=50)
+randomforest_test <- predict(randomforest_model, newdata = test_squared, type= "class")
+
+#Confusion matrix
+confusionMatrix(table(randomforest_test,test_squared$status)) 
+#Accuracy=92.94%
+#Sensitivity=95%
+#Specificity=88%
 ```
 
 ## Final table 

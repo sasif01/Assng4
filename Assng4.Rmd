@@ -418,17 +418,21 @@ confusionMatrix(table(bag_CART_pred,tumor_test$status))
 #Sensitivity=93.33%
 #Specificity=92%
 
-# quadratic effects
+#### quadratic effects
+#square all predictors and add as new columns
 train_squared<- data.frame(lapply(tumor_train[2:31], function(x) cbind(x, (x^2))))
+#add status column to above dataframe
 train_squared$status<-tumor_train$status
+#do the same to test data
 test_squared<- data.frame(lapply(tumor_test[2:31], function(x) cbind(x, (x^2))))
 test_squared$status<-tumor_test$status
+#for reproducibility 
 set.seed(213)
 #test all nbag values for model listed above
 for (nbagg in nbagg_values){bag_squared<-bagging(status~., data=train_squared, nbagg=nbagg, coob=T)
 print(paste0("OOB with ", nbagg, " bags: ", bag_squared$err))
 }
-#lowest error =0.0434 with nbagg=200
+#lowest error obtained =0.0434 with nbagg=200
 set.seed(213)
 bag_quadratic<-bagging(status~., data=train_squared, nbagg=200, coob=T)
 bag_CART_squared_pred<-predict(bag_quadratic, newdata=test_squared, type="class")
@@ -448,9 +452,10 @@ head(varImp(bag_quadratic), 5)
 ```{r}
 
 #Tuning random forest model
-#Tuning mtry(Number randomely variable selected is mtry)
 #for reproducible results
 set.seed(751)
+#tuning parameters for random forest
+##tuning mtry=Number randomely variable selected
 control <- trainControl(method='cv', 
                         number=10)
 mtry <- sqrt(ncol(tumor_train[2:31]))
@@ -462,6 +467,8 @@ rf_default <- train(status~.,
                       tuneGrid=tunegrid, 
                       trControl=control)
 print(rf_default) #Accuracy of 95.86% at a value of 5.477226
+
+##tuning ntree values=number of tree split at each node
 set.seed(751)
 ntree_values<-c(50, 100, 150, 200, 300, 400, 500)
 for (ntree in ntree_values) {
@@ -505,15 +512,20 @@ for (ntree in ntree_values) {
 print(paste0("ntree =", ntree, " | OOB error =", round(rf_model$err.rate[ntree, "OOB"], 4)))
 }
 #lowest OOb with 50 trees
-
-randomforest_model<-randomForest(status~., data=train_squared, mtry=7.745967, ntree=50)
-randomforest_test <- predict(randomforest_model, newdata = test_squared, type= "class")
+set.seed(751)
+randomforest_model1<-randomForest(status~., data=train_squared, mtry=7.745967, ntree=50)
+randomforest_test1 <- predict(randomforest_model1, newdata = test_squared, type= "class")
 
 #Confusion matrix
 confusionMatrix(table(randomforest_test,test_squared$status)) 
 #Accuracy=92.94%
 #Sensitivity=95%
 #Specificity=88%
+
+#most important predicting features in regular model
+head(varImp(randomforest_model), 5)
+#most important features in quadratic model
+head(varImp(randomforest_model1), 5)
 ```
 
 ## Final table 

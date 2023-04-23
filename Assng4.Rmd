@@ -1,6 +1,6 @@
 ---
 title: "Assng4"
-author: "Saira Asif" , "Lisa Tran"
+author: "Saira Asif", "Lisa Tran", "Zuhaa Ali"
 date: "`r Sys.Date()`"
 output: html_document
 ---

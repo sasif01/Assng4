@@ -400,40 +400,111 @@ Overall, it was observed that the linear SVM without quadratic terms performed t
 ## a bagged version of CART (Zee)
 ```{r}
 ##bagging regression trees with 150 bootstrap replications
+nbagg_values<-c(100, 150, 200, 300, 400, 500)
 set.seed(123)
-bag<-bagging(status~., data=tumor_train, nbagg=150, coob=T)
+for (nbagg in nbagg_values){bag<-bagging(status~., data=tumor_train, nbagg=nbagg, coob=T)
+print(paste0("OOB with ", nbagg, " bags: ", bag$err))
+}
+#lowest OOB with bags=100
+set.seed(123)
+bag<-bagging(status~., data=tumor_train, nbagg=100, coob=T)
 bag
 #Out-of-bag estimate of misclassification error:  0.0455
-
 bag_CART_pred<-predict(bag, newdata=tumor_test, type="class")
 
-#confusionmatrix
+#confusion matrix with testing data
 confusionMatrix(table(bag_CART_pred,tumor_test$status))
 #Accuracy=92.94%
 #Sensitivity=93.33%
 #Specificity=92%
+
+# quadratic effects
+train_squared<- data.frame(lapply(tumor_train[2:31], function(x) cbind(x, (x^2))))
+train_squared$status<-tumor_train$status
+test_squared<- data.frame(lapply(tumor_test[2:31], function(x) cbind(x, (x^2))))
+test_squared$status<-tumor_test$status
+set.seed(213)
+#test all nbag values for model listed above
+for (nbagg in nbagg_values){bag_squared<-bagging(status~., data=train_squared, nbagg=nbagg, coob=T)
+print(paste0("OOB with ", nbagg, " bags: ", bag_squared$err))
+}
+#lowest error =0.0434 with nbagg=200
+set.seed(213)
+bag_quadratic<-bagging(status~., data=train_squared, nbagg=200, coob=T)
+bag_CART_squared_pred<-predict(bag_quadratic, newdata=test_squared, type="class")
+confusionMatrix(table(bag_CART_squared_pred,test_squared$status))
+#Accuracy=91.67%
+#Sensitivity=91.67%
+#Specificity=92%
+#non quadratic model has a higher accuracy sensitivity and roughly the same specificity
+
+#most important predicting features in regular model
+head(varImp(bag), 5)
+#most important features in quadratic model
+head(varImp(bag_quadratic), 5)
 ```
 
 ## random forests. (Zee)
 ```{r}
+
+#Tuning random forest model
+#Tuning mtry(Number randomely variable selected is mtry)
 #for reproducible results
 set.seed(751)
+control <- trainControl(method='cv', 
+                        number=10)
+mtry <- sqrt(ncol(tumor_train[2:31]))
+tunegrid <- expand.grid(.mtry=mtry)
+rf_default <- train(status~., 
+                      data=tumor_train, 
+                      method='rf', 
+                      metric='Accuracy', 
+                      tuneGrid=tunegrid, 
+                      trControl=control)
+print(rf_default) #Accuracy of 95.86% at a value of 5.477226
+set.seed(751)
+ntree_values<-c(50, 100, 150, 200, 300, 400, 500)
+for (ntree in ntree_values) {
+  rf_model <- randomForest(status ~ ., 
+                            data = tumor_train, 
+                            ntree = ntree, mtry=5.477226)}
 
-#Creating random forest model
-randomforest_model<-randomForest(status~., data=tumor_train, mtry=5, ntree=500)
-randomforest_model
-#random forest classification with 500 trees generated at each node, which splits into 5 smaller nodes
+print(paste0("ntree =", ntree, " | OOB error =", round(1 - rf_model$err.rate[ntree, "OOB"], 4)))
 
+#highest accuracy at ntree=500 of 96.28%
+set.seed(751)
+randomforest_model<-randomForest(status ~ ., data = tumor_train, ntree = 500, mtry=5.477226)
 #testing the model on unseen data
 randomforest_test <- predict(randomforest_model, newdata = tumor_test, type= "class")
 
 #Confusion matrix
 confusionMatrix(table(randomforest_test,tumor_test$status)) 
-###Accuracy= 94%
+###Accuracy= 94.12%
 ##Sensitivity= 95%
 ##Specificity= 92%
 
-##
+##quadratic effects
+set.seed(751)
+control <- trainControl(method='cv', 
+                        number=10)
+mtry <- sqrt(ncol(train_squared[1:60]))
+tunegrid <- expand.grid(.mtry=mtry)
+rf_default <- train(status~., 
+                      data=train_squared, 
+                      method='rf', 
+                      metric='Accuracy', 
+                      tuneGrid=tunegrid, 
+                      trControl=control)
+print(rf_default) #Accuracy of 95.86% at a value of 5.477226
+set.seed(751)
+ntree_values<-c(50, 100, 150, 200, 300, 400, 500)
+for (ntree in ntree_values) {
+  rf_model <- randomForest(status ~ ., 
+                            data = tumor_train, 
+                            ntree = ntree, mtry=5.477226)}
+
+randomforest_model<-randomForest(status~., data=train_squared, mtry=5, ntree=500)
+randomforest_model
 ```
 
 ## Final table 
@@ -448,7 +519,7 @@ tab[2,] <- c(91.76, 93.44, 87.50)
 tab[3,] <- c(90.59, 96.00, 88.33 )
 tab[4,] <- c(97.65, 100, 96.77)
 tab[5,] <- c(92.94,92, 93.33)
-tab[6,] <- c(94, 92, 95)
+tab[6,] <- c(94.12, 92, 95)
 tab
 ```
 

@@ -46,6 +46,19 @@ apply(tumor_train, 2, function(x){sum(x==0)})
 #convert status to factor
 tumor_train$status<-as.factor(tumor_train$status)
 tumor_test$status<-as.factor(tumor_test$status)
+
+# Creating a squared data frame to exolore quadratic effects in our models
+sq_train <- apply(tumor_train[2:31], 2, function(x)x^2)
+sq_test <- apply(tumor_test[2:31], 2, function(x)x^2)
+
+# Renaming the columns of squared matrix
+colnames(sq_train) <- paste(colnames(sq_train), "^2", sep = "")
+colnames(sq_test) <- paste(colnames(sq_test), "^2", sep = "")
+
+# Combining the two dataframes together for modeling 
+tumor_train <- cbind(tumor_train, sq_train)
+tumor_test <- cbind(tumor_test, sq_test)
+
 ```
 
 ## elastic net (include Lasso and Ridge in your search grid) (Saira )
